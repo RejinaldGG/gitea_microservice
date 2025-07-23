@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.adapters.VersionExtractors.AlpineVersionExtractor;
 import com.example.gitea_microservice.infrastructure.adapters.VersionExtractors.ArchVersionExtractor;
+import com.example.gitea_microservice.infrastructure.adapters.VersionExtractors.CargoVersionExtractor;
 import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtractor;
 import com.example.gitea_microservice.infrastructure.ports.VersionExtractionUseCase;
 
@@ -18,6 +19,7 @@ public class VersionExtractionService implements VersionExtractionUseCase{
     public VersionExtractionService() {
         extractors.put(PackageManager.ALPINE, new AlpineVersionExtractor());
         extractors.put(PackageManager.ARCH, new ArchVersionExtractor());
+        extractors.put(PackageManager.CARGO, new CargoVersionExtractor());
     }
 
     @Override

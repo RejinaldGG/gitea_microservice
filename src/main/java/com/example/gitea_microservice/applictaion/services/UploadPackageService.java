@@ -44,19 +44,5 @@ public class UploadPackageService implements UploadPackageUseCase{
             e.printStackTrace();
         }
     }
-   public String extractVersionFromFile(MultipartFile file) {
-            String filename = file.getOriginalFilename();
-        if (filename != null) {
-            Pattern pattern = Pattern.compile("-((\\d+(?:\\.\\d+)*)(?:-r\\d+|-\\d+))(?:-[\\w]+)?\\.(apk|pkg\\.tar\\.zst)$");
-
-            Matcher matcher = pattern.matcher(filename);
-            if (matcher.find()) {
-                String version = matcher.group(1); 
-                return version;
-            }
-        }
-        throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not extract version from filename: " + filename);
-
-}
 
 }
