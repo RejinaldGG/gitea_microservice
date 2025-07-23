@@ -1,0 +1,17 @@
+{"properties": [
+  {
+    "name": "gitea.token",
+    "type": "java.lang.String",
+    "description": "Gitea Auth token"
+  },
+  {
+    "name": "gitea.url",
+    "type": "java.lang.String",
+    "description": "Gitea Url'"
+  },
+  {
+    "name": "gitea.owner",
+    "type": "java.lang.String",
+    "description": "Gitea Owner"
+  }
+]}
