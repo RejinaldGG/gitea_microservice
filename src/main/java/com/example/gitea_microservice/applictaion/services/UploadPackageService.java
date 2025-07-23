@@ -1,18 +1,14 @@
 package com.example.gitea_microservice.applictaion.services;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.gitea_microservice.domain.exception.InvalidPackageException;
+import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.GitPackage;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.GiteaClientPort;
@@ -53,7 +49,7 @@ public class UploadPackageService implements UploadPackageUseCase{
                 return version;
             }
         }
-        throw new RuntimeException("Could not extract version from filename: " + filename);
+        throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not extract version from filename: " + filename);
 
 }
 
