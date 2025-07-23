@@ -24,9 +24,25 @@ public class PackageValidatorAdapter implements PackageValidatorPort {
             case ALPINE:
                 validateAlpine(file);
                 break;
+            case ARCH:
+                validateArch(file);
+                break;
+            default: 
+            break;
         }
     }
 
+
+    
+    private void validateArch(MultipartFile file) {
+            if (!file.getOriginalFilename().endsWith(".pkg.tar.zst")) {
+        throw new InvalidPackageException(
+            PackageErrorType.INVALID_FORMAT,
+            "Arch-package must be .pkg.tar.zst"
+        ).withDetail("expected_extension", ".pkg.tar.zst")
+         .withDetail("actual_extension", getFileExtension(file));
+    }
+}
     private void validateAlpine(MultipartFile file) throws InvalidPackageException {
     if (!file.getOriginalFilename().endsWith(".apk")) {
         throw new InvalidPackageException(

@@ -26,6 +26,6 @@ public class PackageController {
         @RequestPart MultipartFile file
     ) {
         uploadUseCase.uploadPackage(PackageManager.fromString(manager), file);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.ok().build();
     }
 }
