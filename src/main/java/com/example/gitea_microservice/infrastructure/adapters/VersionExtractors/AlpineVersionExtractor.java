@@ -3,13 +3,20 @@ package com.example.gitea_microservice.infrastructure.adapters.VersionExtractors
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.stereotype.Component;
+
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
+import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtractor;
-
+@Component
 public class AlpineVersionExtractor implements PackageVersionExtractor {
     private static final Pattern pattern = Pattern.compile("-((\\d+(?:\\.\\d+)*)(?:-r\\d+))\\.apk$");
-
+    private final PackageManager supportedManager = PackageManager.ALPINE;
+    @Override
+    public boolean supports(PackageManager manager) {
+        return manager == supportedManager;
+    }
     @Override
     public String extract(String filename) {
         if (filename != null) {

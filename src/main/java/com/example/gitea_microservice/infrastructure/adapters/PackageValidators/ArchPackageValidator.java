@@ -6,17 +6,19 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
-import com.example.gitea_microservice.infrastructure.ports.PackageValidator;
+import com.example.gitea_microservice.domain.models.PublishType;
+import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
 
 @Component
-public class ArchPackageValidator implements PackageValidator {
- @Override
+public class ArchPackageValidator implements PackageValidatorPort {
+    private final PackageManager supportedManager = PackageManager.ARCH;
+    @Override
     public boolean supports(PackageManager manager) {
-        return manager == PackageManager.ARCH;
+        return manager == supportedManager;
     }
 
     @Override
-    public void validate(MultipartFile file) throws InvalidPackageException {
+    public PublishType validate(MultipartFile file) throws InvalidPackageException {
         if (!file.getOriginalFilename().endsWith(".pkg.tar.zst")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
@@ -24,6 +26,7 @@ public class ArchPackageValidator implements PackageValidator {
             ).withDetail("expected_extension", ".pkg.tar.zst")
              .withDetail("actual_extension", getFileExtension(file));
         }
+         return supportedManager.getPublishType();
     }
 
     private String getFileExtension(MultipartFile file) {

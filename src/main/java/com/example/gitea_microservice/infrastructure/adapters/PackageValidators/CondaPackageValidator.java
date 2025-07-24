@@ -8,10 +8,9 @@ import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
-
 @Component
-public class AlpinePackageValidator implements PackageValidatorPort {
-    private final PackageManager supportedManager = PackageManager.ALPINE;
+public class CondaPackageValidator implements PackageValidatorPort{
+private final PackageManager supportedManager = PackageManager.CONDA;
     @Override
     public boolean supports(PackageManager manager) {
         return manager == supportedManager;
@@ -19,14 +18,14 @@ public class AlpinePackageValidator implements PackageValidatorPort {
 
     @Override
     public PublishType validate(MultipartFile file) throws InvalidPackageException {
-        if (!file.getOriginalFilename().endsWith(".apk")) {
+        if (!file.getOriginalFilename().endsWith(".conda") && !file.getOriginalFilename().endsWith("tar.bz2")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Alpine-package must be .apk"
-            ).withDetail("expected_extension", ".apk")
+                "Conda-package must be .conda or .tar.bz2"
+            ).withDetail("expected_extension", ".conda or .tar.bz2")
              .withDetail("actual_extension", getFileExtension(file));
         }
-         return supportedManager.getPublishType();
+        return supportedManager.getPublishType();
     }
 
     private String getFileExtension(MultipartFile file) {
@@ -37,4 +36,3 @@ public class AlpinePackageValidator implements PackageValidatorPort {
         return filename.substring(filename.lastIndexOf('.')).toLowerCase();
     }
 }
-

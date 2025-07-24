@@ -1,48 +1,27 @@
 package com.example.gitea_microservice.applictaion.services;
 
-import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.gitea_microservice.domain.exception.InvalidPackageException;
-import com.example.gitea_microservice.domain.exception.PackageErrorType;
-import com.example.gitea_microservice.domain.models.GitPackage;
 import com.example.gitea_microservice.domain.models.PackageManager;
-import com.example.gitea_microservice.infrastructure.ports.GiteaClientPort;
-import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
+import com.example.gitea_microservice.infrastructure.ports.UploadPackagePort;
 import com.example.gitea_microservice.infrastructure.ports.UploadPackageUseCase;
-import com.example.gitea_microservice.infrastructure.ports.VersionExtractionUseCase;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class UploadPackageService implements UploadPackageUseCase{
     
-    private final GiteaClientPort giteaClient;
-    private final PackageValidatorPort packageValidator;
-    private final VersionExtractionUseCase versionExtractor;
+    private final List<UploadPackagePort> uploaders;
     @Override
     public void uploadPackage(PackageManager manager, MultipartFile file) {
-        try {
-            packageValidator.validate(manager, file);
-            byte[] fileContent = file.getBytes();
-            String fileName = file.getOriginalFilename();
-            String version = versionExtractor.extractVersion(manager, fileName);
-            
-                GitPackage pkg = GitPackage.builder()
-                    .manager(manager)
-                    .name(fileName)
-                    .version(version)
-                    .content(fileContent)
-                    .build();
-                giteaClient.uploadPackage(pkg);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+       uploaders.stream()
+            .filter(e -> e.supports(manager))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("No uploader defined for: " + manager))
+            .uploadPackage(manager, file);
     }
 
 }

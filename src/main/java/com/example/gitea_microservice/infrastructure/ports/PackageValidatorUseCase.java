@@ -6,7 +6,6 @@ import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
 
-public interface PackageValidatorPort {
-    boolean supports(PackageManager manager);
-    PublishType validate(MultipartFile file) throws InvalidPackageException;
+public interface PackageValidatorUseCase {
+    PublishType validate(PackageManager manager, MultipartFile file) throws InvalidPackageException;
 }

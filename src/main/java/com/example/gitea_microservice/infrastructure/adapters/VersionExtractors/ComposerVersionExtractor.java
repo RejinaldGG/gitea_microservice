@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.VersionExtractors;
 
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,10 +10,16 @@ import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtractor;
+
 @Component
-public class ArchVersionExtractor implements PackageVersionExtractor {
-    private static final Pattern pattern = Pattern.compile("-((\\d+(?:\\.\\d+)*)(?:-\\d+))-(?:[\\w]+)\\.pkg\\.tar\\.zst$");
-    private final PackageManager supportedManager = PackageManager.ARCH;
+public class ComposerVersionExtractor implements PackageVersionExtractor{
+private static final Pattern pattern = Pattern.compile(
+    "-(\\d+(?:\\.\\d+)*)(?:-[\\w]+)?\\.(?:zip|tar\\.gz|tgz)$", 
+    Pattern.CASE_INSENSITIVE
+);
+
+
+    private final PackageManager supportedManager = PackageManager.COMPOSER;
         @Override
         public boolean supports(PackageManager manager) {
             return manager == supportedManager;
@@ -29,6 +36,6 @@ public class ArchVersionExtractor implements PackageVersionExtractor {
             }
         }
         throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not extract version from filename: " + filename);
-}
-}
+    }
 
+}

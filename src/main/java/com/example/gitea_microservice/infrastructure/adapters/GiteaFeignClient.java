@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,14 +21,94 @@ public interface GiteaFeignClient {
     
     
     @PutMapping(
-        value = "/api/packages/{owner}/{type}/dev/rep",
+        value = "/api/packages/{owner}/{type}/{branch}/{repository}",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    ResponseEntity<Void> uploadPackage(
+    ResponseEntity<Void> uploadAlpinePackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @PathVariable("branch") String branch,
+        @PathVariable("repository") String repository,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
+
+        @PutMapping(
+        value = "/api/packages/{owner}/{type}",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadArchPackage(
         @PathVariable("owner") String owner,
         @PathVariable("type") String packageType,
         @RequestHeader("Authorization") String token,
         @RequestPart("data") MultipartFile file
     );
 
+    @PutMapping(
+        value = "/api/packages/{owner}/{type}",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadComposerPackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @RequestParam("version") String version,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
+
+     @PutMapping(
+        value = "/api/packages/{owner}/{type}/{filename}",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadCondaPackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @PathVariable("filename") String filename,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
+
+    @PutMapping(
+        value = "/api/packages/{owner}/cargo/api/v1/crates/new",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    String uploadPackageCargo(
+        @RequestHeader("Authorization") String token,
+        @RequestPart("metadata") String metadata,
+        @RequestPart("package") MultipartFile file,
+        @PathVariable("owner") String owner
+    );
+
+     @PutMapping(
+        value = "/api/packages/{owner}/{type}/src",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadCranPackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
+    @PutMapping(
+        value = "/api/packages/{owner}/{type}/pool/{distribution}/{component}/upload",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadDebianPackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @PathVariable("distribution") String distribution,
+        @PathVariable("component") String component,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
+    @PutMapping(
+        value = "/api/packages/{owner}/{type}/upload",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadGoPackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
 }

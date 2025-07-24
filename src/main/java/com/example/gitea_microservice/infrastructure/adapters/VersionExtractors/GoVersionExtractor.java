@@ -9,10 +9,18 @@ import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtractor;
+
 @Component
-public class ArchVersionExtractor implements PackageVersionExtractor {
-    private static final Pattern pattern = Pattern.compile("-((\\d+(?:\\.\\d+)*)(?:-\\d+))-(?:[\\w]+)\\.pkg\\.tar\\.zst$");
-    private final PackageManager supportedManager = PackageManager.ARCH;
+public class GoVersionExtractor implements PackageVersionExtractor {
+    private static final Pattern pattern = Pattern.compile(
+    "^(?:.*[_-])?" +          // Префикс имени (опционально)
+    "(v?\\d+" +               // 'v' префикс (опционально) + мажорная версия
+    "(?:\\.\\d+)*" +          // Минорные и патч версии (.Y.Z)
+    "(?:[_-][\\w\\d.-]+)?)" + // Дополнительные суффиксы (-beta, _rc1)
+    "(?:\\.zip)$",            // Расширение .zip
+    Pattern.CASE_INSENSITIVE
+);
+    private final PackageManager supportedManager = PackageManager.GO;
         @Override
         public boolean supports(PackageManager manager) {
             return manager == supportedManager;
@@ -31,4 +39,3 @@ public class ArchVersionExtractor implements PackageVersionExtractor {
         throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not extract version from filename: " + filename);
 }
 }
-
