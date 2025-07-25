@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -79,60 +80,68 @@ public class ConanPackageUploader extends AbstractManagerPackageUploader {
     }
 
     private String extractConanAttribute(Path conanfile, String attribute) throws IOException {
-    return Files.readAllLines(conanfile).stream()
-        .map(String::trim)
-        .filter(line -> line.startsWith(attribute))
-        .map(line -> line.split("="))
-        .filter(parts -> parts.length == 2)
-        .map(parts -> parts[1].trim().replaceAll("['\"]", ""))
-        .findFirst()
-        .orElseThrow(() -> new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not find '" + attribute + "' in conanfile.py"));
-}
+        return Files.readAllLines(conanfile).stream()
+            .map(String::trim)
+            .filter(line -> line.startsWith(attribute))
+            .map(line -> line.split("="))
+            .filter(parts -> parts.length == 2)
+            .map(parts -> parts[1].trim().replaceAll("['\"]", ""))
+            .findFirst()
+            .orElseThrow(() -> new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not find '" + attribute + "' in conanfile.py"));
+    }
 
-private String extractName(Path conanfile) throws IOException {
-    return extractConanAttribute(conanfile, "name");
-}
+    private String extractName(Path conanfile) throws IOException {
+        return extractConanAttribute(conanfile, "name");
+    }
 
-private String extractVersion(Path conanfile) throws IOException {
-    return extractConanAttribute(conanfile, "version");
-}
+    private String extractVersion(Path conanfile) throws IOException {
+        return extractConanAttribute(conanfile, "version");
+    }
 
-    
+    private String runCommand(Path conanDir, List<String> command) {
+
+
+        ProcessBuilder pb = new ProcessBuilder()
+                .command(command)
+                .directory(conanDir.toFile())
+                .redirectErrorStream(true);
+
+        StringBuilder output = new StringBuilder();
+        try {
+            Process process = pb.start();
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("Conan command failed with exit code " + exitCode + "\nOutput:\n" + output);
+            }
+
+            return output.toString();
+
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to run Conan command: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     protected void runUpload(Path tempDir) throws IOException, InterruptedException {
         Path conanDir = findProjectDir(tempDir);
         Path metadata = conanDir.resolve("conanfile.py");
         String name = extractName(metadata);
         String version = extractVersion(metadata);
-
-        ProcessBuilder pbRemote = new ProcessBuilder()
-            .command("conan", "remote", "add", giteaConfig.getOwner(), giteaConfig.getUrl()+"api/packages/"+giteaConfig.getOwner()+"conan")
-            .directory(conanDir.toFile()) 
-            .redirectErrorStream(true);
-
-        pbRemote.start();
-
-        ProcessBuilder pb = new ProcessBuilder()
-            .command("conan", "upload", name+"/"+version,"--remote="+giteaConfig.getOwner())
-            .directory(conanDir.toFile()) 
-            .redirectErrorStream(true);
-
-        Process process = pb.start();
-
-        StringBuilder output = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
-        }
-
-        int exitCode = process.waitFor();
-        log.info("Conan (knife) publish output:\n{}", output);
-
-        if (exitCode != 0) {
-            throw new RuntimeException("Conan publish failed with exit code " + exitCode);
-        }
-    }
         
+        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "add", giteaConfig.getOwner(), giteaConfig.getUrl()+"/api/packages/"+giteaConfig.getOwner()+"/conan")));
+        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "login", giteaConfig.getOwner(), giteaConfig.getOwner(), "-p", "giteagitea")));
+        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "profile", "detect", "--force")));
+        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "create", ".", "--name=" + name, "--version=" + version)));
+        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "upload", name+"/"+version,"--remote="+giteaConfig.getOwner())));
+        
+}
 }

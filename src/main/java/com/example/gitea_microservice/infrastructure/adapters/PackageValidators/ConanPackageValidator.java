@@ -19,11 +19,11 @@ public class ConanPackageValidator implements PackageValidatorPort{
 
     @Override
     public PublishType validate(MultipartFile file) throws InvalidPackageException {
-        if (!file.getOriginalFilename().endsWith(".tgz")) {
+        if (!file.getOriginalFilename().endsWith(".tar.gz")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Conan-package must be .tgz"
-            ).withDetail("expected_extension", ".tgz")
+                "Conan-package must be .tar.gz"
+            ).withDetail("expected_extension", ".tar.gz")
              .withDetail("actual_extension", getFileExtension(file));
         }
         return supportedManager.getPublishType();

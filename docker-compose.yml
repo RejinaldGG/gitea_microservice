@@ -5,7 +5,7 @@ networks:
     external: false
 
 services:
-  server:
+  gitea:
     image: docker.gitea.com/gitea:1.23.3
     container_name: gitea
     environment:
@@ -29,6 +29,17 @@ services:
     depends_on:
       - db
 
+  api:
+    container_name: api
+    build: ../
+    restart: always
+    networks:
+      - gitea
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - gitea
   db:
     image: docker.io/library/postgres:14
     restart: always
