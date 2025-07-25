@@ -12,4 +12,6 @@ public interface GitClientPort {
     void uploadCranPackage(GitPackage pkg);
     void uploadDebianPackage(GitPackage pkg);
     void uploadGoPackage(GitPackage pkg);
+    void uploadRpmPackage(GitPackage pkg);
+    void uploadRubyGemsPackage(GitPackage pkg);
 }

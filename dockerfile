@@ -1,7 +1,5 @@
-# Стадия сборки
 FROM eclipse-temurin:21-jdk AS builder
 
-# Установим curl и зависимости для установки Rust/Cargo
 RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
@@ -10,43 +8,41 @@ RUN apt-get update && apt-get install -y \
     maven \
     && rm -rf /var/lib/apt/lists/*
 
-# Установим Rust и Cargo
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-
-# Добавим Cargo в PATH
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Установим рабочую директорию
 WORKDIR /app
 
-# Копируем файлы проекта
 COPY pom.xml ./
 COPY src ./src
 
-# Собираем проект (пропускаем тесты для ускорения)
 RUN mvn clean package -DskipTests
 
-# =====================================================
-# Финальный runtime-образ
 FROM eclipse-temurin:21-jdk
 
-# Установим необходимые зависимости и Cargo
 RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     pkg-config \
     libssl-dev \
+    gnupg \
+    python3-full \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/* \
-    && curl https://sh.rustup.rs -sSf | sh -s -- -y
+    && curl -L https://omnitruck.chef.io/install.sh | bash -s -- -P chef-workstation
 
-ENV PATH="/root/.cargo/bin:${PATH}"
+RUN python3 -m venv /opt/conan-venv && \
+    /opt/conan-venv/bin/pip install --upgrade pip && \
+    /opt/conan-venv/bin/pip install conan && \
+    ln -s /opt/conan-venv/bin/conan /usr/local/bin/conan
 
-# Рабочая директория
+
+ENV PATH="/opt/chef-workstation/bin:${PATH}"
 WORKDIR /app
 
-# Копируем собранный JAR-файл
 COPY --from=builder /app/target/*.jar app.jar
+COPY ./gitea.priv /root/.chef/gitea.priv
+COPY ./config.toml /root/.cargo/config.toml
+COPY ./credentials.toml /root/.cargo/credentials.toml
 
-
-# Запуск приложения
 ENTRYPOINT ["java", "-jar", "app.jar"]

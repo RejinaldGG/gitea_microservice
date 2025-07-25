@@ -111,4 +111,26 @@ public interface GiteaFeignClient {
         @RequestHeader("Authorization") String token,
         @RequestPart("data") MultipartFile file
     );
+     @PutMapping(
+        value = "/api/packages/{owner}/{type}/{group}/upload",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadRpmPackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @PathVariable("group") String group,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
+    @PutMapping(
+        value = "/api/packages/{owner}/{type}",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<Void> uploadRubyGemsPackage(
+        @PathVariable("owner") String owner,
+        @PathVariable("type") String packageType,
+        @PathVariable("group") String group,
+        @RequestHeader("Authorization") String token,
+        @RequestPart("data") MultipartFile file
+    );
 }

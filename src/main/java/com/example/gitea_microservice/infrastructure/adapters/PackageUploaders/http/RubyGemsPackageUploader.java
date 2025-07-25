@@ -1,6 +1,4 @@
-package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders;
-
-import java.io.IOException;
+package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.http;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,12 +9,12 @@ import com.example.gitea_microservice.infrastructure.adapters.GiteaClientAdapter
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorUseCase;
 import com.example.gitea_microservice.infrastructure.ports.VersionExtractionUseCase;
 @Component
-public class AlpinePackageUploader extends AbstractPackageUploader{
+public class RubyGemsPackageUploader extends AbstractHttpPackageUploader{
     protected final GiteaClientAdapter giteaClient;
     protected final PackageValidatorUseCase packageValidator;
     protected final VersionExtractionUseCase versionExtractor;
     
-    public AlpinePackageUploader(GiteaClientAdapter giteaClient,
+    public  RubyGemsPackageUploader(GiteaClientAdapter giteaClient,
                                PackageValidatorUseCase packageValidator,
                                VersionExtractionUseCase versionExtractor) {
         super(packageValidator, versionExtractor);
@@ -27,24 +25,12 @@ public class AlpinePackageUploader extends AbstractPackageUploader{
 
     @Override
     public boolean supports(PackageManager manager) {
-        return manager == PackageManager.ALPINE;
+        return manager == PackageManager.RUBYGEMS;
     }
     @Override
     protected void doUpload(PackageManager manager, MultipartFile file, String version) {
-        byte[] fileContent;
-       try {
-        fileContent = file.getBytes();
-        String fileName = file.getOriginalFilename();
-        GitPackage pkg = GitPackage.builder()
-            .manager(manager)
-            .name(fileName)
-            .version(version)
-            .content(fileContent)
-            .build();
-        giteaClient.uploadAlpinePackage(pkg);
-       } catch (IOException e) {
-        e.printStackTrace();
-       }
+        GitPackage pkg = buildGitPackage(manager, file, version);
+        giteaClient.uploadRubyGemsPackage(pkg);
     }
 
 }

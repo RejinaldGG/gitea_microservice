@@ -13,11 +13,11 @@ import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtract
 @Component
 public class GoVersionExtractor implements PackageVersionExtractor {
     private static final Pattern pattern = Pattern.compile(
-    "^(?:.*[_-])?" +          // Префикс имени (опционально)
-    "(v?\\d+" +               // 'v' префикс (опционально) + мажорная версия
-    "(?:\\.\\d+)*" +          // Минорные и патч версии (.Y.Z)
-    "(?:[_-][\\w\\d.-]+)?)" + // Дополнительные суффиксы (-beta, _rc1)
-    "(?:\\.zip)$",            // Расширение .zip
+    "^(?:.*[_-])?" +          
+    "(v?\\d+" +               
+    "(?:\\.\\d+)*" +          
+    "(?:[_-][\\w\\d.-]+)?)" + 
+    "(?:\\.zip)$",            
     Pattern.CASE_INSENSITIVE
 );
     private final PackageManager supportedManager = PackageManager.GO;

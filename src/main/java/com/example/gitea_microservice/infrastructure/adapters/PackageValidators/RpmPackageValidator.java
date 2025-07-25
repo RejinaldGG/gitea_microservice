@@ -8,10 +8,9 @@ import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
-
 @Component
-public class GoPackageValidator implements PackageValidatorPort{
-private final PackageManager supportedManager = PackageManager.GO;
+public class RpmPackageValidator implements PackageValidatorPort{
+private final PackageManager supportedManager = PackageManager.RPM;
     @Override
     public boolean supports(PackageManager manager) {
         return manager == supportedManager;
@@ -19,11 +18,11 @@ private final PackageManager supportedManager = PackageManager.GO;
 
     @Override
     public PublishType validate(MultipartFile file) throws InvalidPackageException {
-        if (!file.getOriginalFilename().endsWith(".zip")) {
+        if (!file.getOriginalFilename().endsWith(".rpm")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Go-package must be  .zip"
-            ).withDetail("expected_extension", ".zip")
+                "RPM-package must be  .rpm"
+            ).withDetail("expected_extension", ".rpm")
              .withDetail("actual_extension", getFileExtension(file));
         }
         return supportedManager.getPublishType();

@@ -9,16 +9,16 @@ import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtractor;
-
 @Component
-public class ComposerVersionExtractor implements PackageVersionExtractor{
-private static final Pattern pattern = Pattern.compile(
-    "-(\\d+(?:\\.\\d+)*)(?:-[\\w]+)?\\.(?:zip|tar\\.gz|tgz)$", 
+public class RubyGemsVersionExtractor implements PackageVersionExtractor {
+    private static final Pattern pattern = Pattern.compile(
+    "^(?:.*[_-])?" +          
+    "(v?\\d+(?:\\.\\d+)*)" +  
+    "(?:-([\\w.-]+))?" +      
+    "(?:\\.gem)$",            
     Pattern.CASE_INSENSITIVE
 );
-
-
-    private final PackageManager supportedManager = PackageManager.COMPOSER;
+    private final PackageManager supportedManager = PackageManager.RUBYGEMS;
         @Override
         public boolean supports(PackageManager manager) {
             return manager == supportedManager;
@@ -35,6 +35,5 @@ private static final Pattern pattern = Pattern.compile(
             }
         }
         throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not extract version from filename: " + filename);
-    }
-
+}
 }

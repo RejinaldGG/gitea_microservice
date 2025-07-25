@@ -1,7 +1,10 @@
-package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders;
+package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.http;
+
+import java.io.IOException;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.gitea_microservice.domain.models.GitPackage;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorUseCase;
 import com.example.gitea_microservice.infrastructure.ports.UploadPackagePort;
@@ -9,10 +12,10 @@ import com.example.gitea_microservice.infrastructure.ports.VersionExtractionUseC
 
 
 
-public abstract class AbstractPackageUploader implements UploadPackagePort {
+public abstract class AbstractHttpPackageUploader implements UploadPackagePort {
     private final VersionExtractionUseCase versionExtractor;
     private final PackageValidatorUseCase packageValidator;
-    public AbstractPackageUploader(
+    public AbstractHttpPackageUploader(
                                PackageValidatorUseCase packageValidator,
                                VersionExtractionUseCase versionExtractor) {
         this.packageValidator = packageValidator;
@@ -27,4 +30,21 @@ public abstract class AbstractPackageUploader implements UploadPackagePort {
            }
 
     protected abstract void doUpload(PackageManager manager, MultipartFile file, String version);
+
+    protected GitPackage buildGitPackage(PackageManager manager, MultipartFile file, String version){
+        byte[] fileContent = null;
+        try {
+            fileContent = file.getBytes();
+       } catch (IOException e) {
+        e.printStackTrace();
+       }
+       String fileName = file.getOriginalFilename();
+       GitPackage pkg = GitPackage.builder()
+                .manager(manager)
+                .name(fileName)
+                .version(version)
+                .content(fileContent)
+                .build();
+        return pkg;
+    }
 }

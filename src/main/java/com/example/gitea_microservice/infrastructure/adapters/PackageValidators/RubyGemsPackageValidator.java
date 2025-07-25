@@ -8,10 +8,9 @@ import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
-
 @Component
-public class GoPackageValidator implements PackageValidatorPort{
-private final PackageManager supportedManager = PackageManager.GO;
+public class RubyGemsPackageValidator implements PackageValidatorPort{
+private final PackageManager supportedManager = PackageManager.RUBYGEMS;
     @Override
     public boolean supports(PackageManager manager) {
         return manager == supportedManager;
@@ -19,11 +18,11 @@ private final PackageManager supportedManager = PackageManager.GO;
 
     @Override
     public PublishType validate(MultipartFile file) throws InvalidPackageException {
-        if (!file.getOriginalFilename().endsWith(".zip")) {
+        if (!file.getOriginalFilename().endsWith(".gem")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Go-package must be  .zip"
-            ).withDetail("expected_extension", ".zip")
+                "RPM-package must be  .gem"
+            ).withDetail("expected_extension", ".gem")
              .withDetail("actual_extension", getFileExtension(file));
         }
         return supportedManager.getPublishType();

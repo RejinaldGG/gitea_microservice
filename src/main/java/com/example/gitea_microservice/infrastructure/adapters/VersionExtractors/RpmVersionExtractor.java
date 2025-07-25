@@ -11,14 +11,16 @@ import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtractor;
 
 @Component
-public class ComposerVersionExtractor implements PackageVersionExtractor{
-private static final Pattern pattern = Pattern.compile(
-    "-(\\d+(?:\\.\\d+)*)(?:-[\\w]+)?\\.(?:zip|tar\\.gz|tgz)$", 
+public class RpmVersionExtractor implements PackageVersionExtractor {
+    private static final Pattern pattern = Pattern.compile(
+    "^(?:.*[_-])?" +          
+    "(v?\\d+(?:\\.\\d+)*)" +  
+    "(?:[_-]([\\w.-]+))?" +   
+    "(?:\\.[a-z0-9_]+)?" +    
+    "\\.rpm$",                
     Pattern.CASE_INSENSITIVE
 );
-
-
-    private final PackageManager supportedManager = PackageManager.COMPOSER;
+    private final PackageManager supportedManager = PackageManager.RPM;
         @Override
         public boolean supports(PackageManager manager) {
             return manager == supportedManager;
@@ -35,6 +37,5 @@ private static final Pattern pattern = Pattern.compile(
             }
         }
         throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not extract version from filename: " + filename);
-    }
-
+}
 }

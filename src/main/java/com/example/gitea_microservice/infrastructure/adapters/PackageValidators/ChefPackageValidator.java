@@ -8,10 +8,10 @@ import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
-
 @Component
-public class GoPackageValidator implements PackageValidatorPort{
-private final PackageManager supportedManager = PackageManager.GO;
+public class ChefPackageValidator implements PackageValidatorPort{
+ 
+    private final PackageManager supportedManager = PackageManager.CHEF;
     @Override
     public boolean supports(PackageManager manager) {
         return manager == supportedManager;
@@ -19,11 +19,11 @@ private final PackageManager supportedManager = PackageManager.GO;
 
     @Override
     public PublishType validate(MultipartFile file) throws InvalidPackageException {
-        if (!file.getOriginalFilename().endsWith(".zip")) {
+        if (!file.getOriginalFilename().endsWith(".tar.gz")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Go-package must be  .zip"
-            ).withDetail("expected_extension", ".zip")
+                "Chef-package must be .tar.gz"
+            ).withDetail("expected_extension", ".tar.gz")
              .withDetail("actual_extension", getFileExtension(file));
         }
         return supportedManager.getPublishType();
@@ -36,4 +36,6 @@ private final PackageManager supportedManager = PackageManager.GO;
         }
         return filename.substring(filename.lastIndexOf('.')).toLowerCase();
     }
+
+
 }

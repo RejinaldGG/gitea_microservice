@@ -8,10 +8,10 @@ import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
-
 @Component
-public class GoPackageValidator implements PackageValidatorPort{
-private final PackageManager supportedManager = PackageManager.GO;
+public class ConanPackageValidator implements PackageValidatorPort{
+ 
+    private final PackageManager supportedManager = PackageManager.CONAN;
     @Override
     public boolean supports(PackageManager manager) {
         return manager == supportedManager;
@@ -19,11 +19,11 @@ private final PackageManager supportedManager = PackageManager.GO;
 
     @Override
     public PublishType validate(MultipartFile file) throws InvalidPackageException {
-        if (!file.getOriginalFilename().endsWith(".zip")) {
+        if (!file.getOriginalFilename().endsWith(".tgz")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Go-package must be  .zip"
-            ).withDetail("expected_extension", ".zip")
+                "Conan-package must be .tgz"
+            ).withDetail("expected_extension", ".tgz")
              .withDetail("actual_extension", getFileExtension(file));
         }
         return supportedManager.getPublishType();

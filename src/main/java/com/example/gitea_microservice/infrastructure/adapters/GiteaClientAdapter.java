@@ -147,4 +147,30 @@ public class GiteaClientAdapter implements GitClientPort{
             
         );
     }
+    @Override
+    public void uploadRpmPackage(GitPackage pkg) {
+       MultipartFile file = convertToMultipart(pkg);
+        
+        giteaFeignClient.uploadRpmPackage(
+            giteaConfig.getOwner(),
+            pkg.getManager().name().toLowerCase(),
+            pkg.getVersion(),
+            "token " + giteaConfig.getToken(),
+            file
+            
+        );
+    }
+    @Override
+    public void uploadRubyGemsPackage(GitPackage pkg) {
+        MultipartFile file = convertToMultipart(pkg);
+        
+        giteaFeignClient.uploadRubyGemsPackage(
+            giteaConfig.getOwner(),
+            pkg.getManager().name().toLowerCase(),
+            pkg.getVersion(),
+            "token " + giteaConfig.getToken(),
+            file
+            
+        );
+    }
    }
