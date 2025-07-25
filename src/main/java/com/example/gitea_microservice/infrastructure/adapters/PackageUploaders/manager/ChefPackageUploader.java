@@ -1,12 +1,11 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.manager;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -14,7 +13,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
@@ -25,12 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class ChefPackageUploader extends AbstractManagerPackageUploader {
-    private final PackageValidatorUseCase packageValidator;
     private final GiteaConfig giteaConfig;
     public ChefPackageUploader(
         PackageValidatorUseCase packageValidator,GiteaConfig giteaConfig) {
             super(packageValidator);
-            this.packageValidator = packageValidator;
             this.giteaConfig = giteaConfig;
 
     }
@@ -113,28 +109,7 @@ public class ChefPackageUploader extends AbstractManagerPackageUploader {
         Path parentDir = cookbookDir.getParent();
         Path configPath = parentDir.resolve("config.rb");
         createConfig(configPath, parentDir);
-       
-        ProcessBuilder pb = new ProcessBuilder()
-            .command("knife", "supermarket", "share", cookBookName, "-c", configPath.toString())
-            .directory(cookbookDir.toFile()) 
-            .redirectErrorStream(true);
-
-        Process process = pb.start();
-
-        StringBuilder output = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
-        }
-
-        int exitCode = process.waitFor();
-        log.info("Chef (knife) publish output:\n{}", output);
-
-        if (exitCode != 0) {
-            throw new RuntimeException("Chef publish failed with exit code " + exitCode);
-        }
-    }
+        log.info("Conan output:\n{}", runCommand(cookbookDir, List.of("knife", "supermarket", "share", cookBookName, "-c", configPath.toString())));
         
+}
 }

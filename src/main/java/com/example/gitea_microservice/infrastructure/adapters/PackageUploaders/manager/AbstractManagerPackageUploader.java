@@ -1,9 +1,12 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.manager;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -60,6 +63,38 @@ public abstract class AbstractManagerPackageUploader implements UploadPackagePor
         Path pkgFile = tempDir.resolve(file.getOriginalFilename());
         file.transferTo(pkgFile.toFile());
         return pkgFile;
+    } 
+
+    protected String runCommand(Path packageDir, List<String> command) {
+
+
+        ProcessBuilder pb = new ProcessBuilder()
+                .command(command)
+                .directory(packageDir.toFile())
+                .redirectErrorStream(true);
+
+        StringBuilder output = new StringBuilder();
+        try {
+            Process process = pb.start();
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("Command failed with exit code " + exitCode + "\nOutput:\n" + output);
+            }
+
+            return output.toString();
+
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to run command: " + e.getMessage(), e);
+        }
     } 
 
     protected abstract void unpack(Path crateFile, Path outputDir) throws IOException;

@@ -1,12 +1,12 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.manager;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -16,7 +16,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
@@ -26,18 +25,40 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class CargoPackageUploader extends AbstractManagerPackageUploader {
-    private final PackageValidatorUseCase packageValidator;
     private final GiteaConfig giteaConfig;
     public CargoPackageUploader(
         PackageValidatorUseCase packageValidator,GiteaConfig giteaConfig) {
             super(packageValidator);
-            this.packageValidator = packageValidator;
             this.giteaConfig = giteaConfig;
-
     }
     @Override
     public boolean supports(PackageManager manager) {
         return manager.getPublishType() == PublishType.MANAGER && manager == PackageManager.CARGO;
+    }
+
+    private void writeCargoConfig() throws IOException {
+        Path cargoDir = Paths.get("/root/.cargo");
+        if (!Files.exists(cargoDir)) {
+            Files.createDirectories(cargoDir);
+        }
+
+        String configToml = """
+            [registry]
+            default = "gitea"
+
+            [registries.gitea]
+            index = "%s/%s/_cargo-index.git" # Git
+
+            [net]
+            git-fetch-with-cli = true
+            """.formatted(giteaConfig.getUrl(), giteaConfig.getOwner());
+        Files.writeString(cargoDir.resolve("config.toml"), configToml, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+        String credentialsToml = """
+            [registries.gitea]
+            token = "Bearer %s"
+            """.formatted(giteaConfig.getToken());
+        Files.writeString(cargoDir.resolve("credentials.toml"), credentialsToml, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     private Path findCargoProjectDir(Path root) throws IOException {
@@ -78,41 +99,38 @@ public class CargoPackageUploader extends AbstractManagerPackageUploader {
         Path packageDir = findCargoProjectDir(tempDir);
         Path cargoTomlOrig = packageDir.resolve("Cargo.toml.orig");
         Files.deleteIfExists(cargoTomlOrig);
-        ProcessBuilder pb = new ProcessBuilder()
-            .command("cargo", "publish", "--no-verify", "--allow-dirty")
-            .directory(packageDir.toFile())
-            .redirectErrorStream(true);
         Path cargoToml = packageDir.resolve("Cargo.toml");
-        
+        writeCargoConfig();
         List<String> lines = Files.readAllLines(cargoToml);
-        boolean hasPublish = lines.stream().anyMatch(line -> line.trim().startsWith("publish"));
-        if (!hasPublish) {
-            List<String> newLines = new ArrayList<>();
-            for (String line : lines) {
-                newLines.add(line);
-                if (line.trim().startsWith("[package]")) {
-                    newLines.add("publish = [\"gitea\"]"); 
+        List<String> newLines = new ArrayList<>();
+        boolean insidePackage = false;
+        boolean publishSet = false;
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+            
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                if (insidePackage && !publishSet) {
+                    newLines.add("publish = [\"gitea\"]");
+                    publishSet = true;
                 }
+                insidePackage = trimmed.equals("[package]");
             }
-            Files.write(cargoToml, newLines);
+
+            newLines.add(line);
         }
 
-        Process process = pb.start();
-
-        StringBuilder output = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
+        if (insidePackage && !publishSet) {
+            newLines.add("publish = [\"gitea\"]");
         }
 
-        int exitCode = process.waitFor();
-        log.info("cargo publish output:\n{}", output);
+        Files.write(cargoToml, newLines, StandardOpenOption.TRUNCATE_EXISTING);
 
-        if (exitCode != 0) {
-            throw new RuntimeException("cargo publish failed with exit code " + exitCode);
-        }
+        log.info("config.toml:\n{}", Files.readString(Paths.get("/root/.cargo/config.toml")));
+        log.info("credentials.toml:\n{}", Files.readString(Paths.get("/root/.cargo/credentials.toml")));
+        log.info("Cargo output:\n{}", runCommand(packageDir, List.of("cargo", "publish", "--no-verify", "--allow-dirty","--registry", "gitea", "--verbose")));
+
+    
     }
 
 

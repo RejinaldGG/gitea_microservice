@@ -33,3 +33,4 @@ build/
 .vscode/
 ./gitea/
 ./postgres/
+/gitea.priv

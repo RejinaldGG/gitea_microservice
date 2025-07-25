@@ -8,8 +8,7 @@ RUN apt-get update && apt-get install -y \
     maven \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+
 
 WORKDIR /app
 
@@ -20,6 +19,9 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jdk
 
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
@@ -28,8 +30,10 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     python3-full \
     python3-venv \
+    git \
     && rm -rf /var/lib/apt/lists/* \
     && curl -L https://omnitruck.chef.io/install.sh | bash -s -- -P chef-workstation
+    
 
 RUN python3 -m venv /opt/conan-venv && \
     /opt/conan-venv/bin/pip install --upgrade pip && \
@@ -42,7 +46,5 @@ WORKDIR /app
 
 COPY --from=builder /app/target/*.jar app.jar
 COPY ./gitea.priv /root/.chef/gitea.priv
-COPY ./config.toml /root/.cargo/config.toml
-COPY ./credentials.toml /root/.cargo/credentials.toml
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

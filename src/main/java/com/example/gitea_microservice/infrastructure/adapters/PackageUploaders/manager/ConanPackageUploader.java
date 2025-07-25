@@ -1,9 +1,7 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.manager;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +13,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
@@ -29,14 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class ConanPackageUploader extends AbstractManagerPackageUploader {
-    private final VersionExtractionUseCase versionExtractor;
-    private final PackageValidatorUseCase packageValidator;
     private final GiteaConfig giteaConfig;
     public ConanPackageUploader(
         PackageValidatorUseCase packageValidator,GiteaConfig giteaConfig,VersionExtractionUseCase versionExtractor) {
             super(packageValidator);
-            this.versionExtractor = versionExtractor;
-            this.packageValidator = packageValidator;
             this.giteaConfig = giteaConfig;
 
     }
@@ -96,38 +89,6 @@ public class ConanPackageUploader extends AbstractManagerPackageUploader {
 
     private String extractVersion(Path conanfile) throws IOException {
         return extractConanAttribute(conanfile, "version");
-    }
-
-    private String runCommand(Path conanDir, List<String> command) {
-
-
-        ProcessBuilder pb = new ProcessBuilder()
-                .command(command)
-                .directory(conanDir.toFile())
-                .redirectErrorStream(true);
-
-        StringBuilder output = new StringBuilder();
-        try {
-            Process process = pb.start();
-
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-            }
-
-            int exitCode = process.waitFor();
-            if (exitCode != 0) {
-                throw new RuntimeException("Conan command failed with exit code " + exitCode + "\nOutput:\n" + output);
-            }
-
-            return output.toString();
-
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Failed to run Conan command: " + e.getMessage(), e);
-        }
     }
 
     @Override
