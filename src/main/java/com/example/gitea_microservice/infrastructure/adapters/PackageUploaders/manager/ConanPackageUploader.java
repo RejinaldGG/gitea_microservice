@@ -1,17 +1,10 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.manager;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
-
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.stereotype.Component;
 
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
@@ -47,31 +40,7 @@ public class ConanPackageUploader extends AbstractManagerPackageUploader {
                 .getParent();
         }
     }
-    @Override
-    protected void unpack(Path crateFile, Path outputDir) throws IOException {
-        try (InputStream fis = Files.newInputStream(crateFile);
-            GZIPInputStream gzipIn = new GZIPInputStream(fis);
-            TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn)) {
-
-            TarArchiveEntry entry;
-            while ((entry = tarIn.getNextEntry()) != null) {
-                Path outPath = outputDir.resolve(entry.getName()).normalize();
-                if (!outPath.startsWith(outputDir)) {
-                    throw new IOException("Unsafe path: " + entry.getName());
-                }
-
-                if (entry.isDirectory()) {
-                    Files.createDirectories(outPath);
-                } else {
-                    Files.createDirectories(outPath.getParent());
-                    try (OutputStream out = Files.newOutputStream(outPath)) {
-                        IOUtils.copy(tarIn, out);
-                    }
-                }
-            }
-        }
-    }
-
+    
     private String extractConanAttribute(Path conanfile, String attribute) throws IOException {
         return Files.readAllLines(conanfile).stream()
             .map(String::trim)
@@ -99,7 +68,7 @@ public class ConanPackageUploader extends AbstractManagerPackageUploader {
         String version = extractVersion(metadata);
         
         log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "add", giteaConfig.getOwner(), giteaConfig.getUrl()+"/api/packages/"+giteaConfig.getOwner()+"/conan")));
-        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "login", giteaConfig.getOwner(), giteaConfig.getOwner(), "-p", "giteagitea")));
+        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "login", giteaConfig.getOwner(), giteaConfig.getOwner(), "-p", giteaConfig.getPassword())));
         log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "profile", "detect", "--force")));
         log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "create", ".", "--name=" + name, "--version=" + version)));
         log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "upload", name+"/"+version,"--remote="+giteaConfig.getOwner())));

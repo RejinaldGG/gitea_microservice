@@ -1,50 +1,67 @@
-FROM eclipse-temurin:21-jdk AS builder
 
-RUN apt-get update && apt-get install -y \
-    curl \
-    build-essential \
-    pkg-config \
-    libssl-dev \
-    maven \
-    && rm -rf /var/lib/apt/lists/*
-
-
-
+FROM eclipse-temurin:21-jdk-jammy AS builder
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends maven && \
+    rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
-COPY pom.xml ./
 COPY src ./src
-
 RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre-jammy 
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        python3-minimal \
+        python3-venv \
+        pip \
+        gnupg \
+        apt-transport-https \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://download.docker.com/linux/static/stable/$(uname -m)/docker-26.1.3.tgz -o docker.tgz && \
+    tar xzvf docker.tgz && \
+    mv docker/* /usr/bin/ && \
+    chmod +x /usr/bin/docker && \
+    rm -rf docker docker.tgz
+
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain stable
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-RUN apt-get update && apt-get install -y \
-    curl \
-    build-essential \
-    pkg-config \
-    libssl-dev \
-    gnupg \
-    python3-full \
-    python3-venv \
-    git \
+
+RUN python3 -m venv /opt/conan-venv \
+    && /opt/conan-venv/bin/pip install --no-cache-dir conan \
+    && ln -s /opt/conan-venv/bin/conan /usr/local/bin/conan
+
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ruby \
+        ruby-dev \
+        build-essential \
+    && gem install --no-document knife \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -L https://omnitruck.chef.io/install.sh | bash -s -- -P chef-workstation
-    
+    && rm -rf /usr/lib/ruby/gems/*/cache/*
 
-RUN python3 -m venv /opt/conan-venv && \
-    /opt/conan-venv/bin/pip install --upgrade pip && \
-    /opt/conan-venv/bin/pip install conan && \
-    ln -s /opt/conan-venv/bin/conan /usr/local/bin/conan
+RUN wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | \
+    gpg --dearmor -o /usr/share/keyrings/dart.gpg && \
+    echo 'deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main' | \
+    tee /etc/apt/sources.list.d/dart_stable.list && \
+    apt-get update && \
+    apt-get install -y dart && \
+    rm -rf /var/lib/apt/lists/*
+   
+RUN python3 -m pip install --no-cache-dir twine
 
-
-ENV PATH="/opt/chef-workstation/bin:${PATH}"
 WORKDIR /app
-
 COPY --from=builder /app/target/*.jar app.jar
-COPY ./gitea.priv /root/.chef/gitea.priv
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

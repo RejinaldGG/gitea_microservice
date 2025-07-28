@@ -1,8 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageUploaders.manager;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,11 +8,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
-
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.stereotype.Component;
 
 import com.example.gitea_microservice.domain.models.PackageManager;
@@ -68,30 +61,6 @@ public class CargoPackageUploader extends AbstractManagerPackageUploader {
                 .findFirst()
                 .orElseThrow(() -> new IOException("Cargo.toml not found"))
                 .getParent();
-        }
-    }
-    @Override
-    protected void unpack(Path crateFile, Path outputDir) throws IOException {
-        try (InputStream fis = Files.newInputStream(crateFile);
-            GZIPInputStream gzipIn = new GZIPInputStream(fis);
-            TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn)) {
-
-            TarArchiveEntry entry;
-            while ((entry = tarIn.getNextEntry()) != null) {
-                Path outPath = outputDir.resolve(entry.getName()).normalize();
-                if (!outPath.startsWith(outputDir)) {
-                    throw new IOException("Unsafe path: " + entry.getName());
-                }
-
-                if (entry.isDirectory()) {
-                    Files.createDirectories(outPath);
-                } else {
-                    Files.createDirectories(outPath.getParent());
-                    try (OutputStream out = Files.newOutputStream(outPath)) {
-                        IOUtils.copy(tarIn, out);
-                    }
-                }
-            }
         }
     }
     @Override

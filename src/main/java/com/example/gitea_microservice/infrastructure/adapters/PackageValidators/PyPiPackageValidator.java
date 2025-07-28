@@ -1,0 +1,39 @@
+package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.gitea_microservice.domain.exception.InvalidPackageException;
+import com.example.gitea_microservice.domain.exception.PackageErrorType;
+import com.example.gitea_microservice.domain.models.PackageManager;
+import com.example.gitea_microservice.domain.models.PublishType;
+import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
+
+@Component
+public class PyPiPackageValidator implements PackageValidatorPort{
+private final PackageManager supportedManager = PackageManager.PYPI;
+    @Override
+    public boolean supports(PackageManager manager) {
+        return manager == supportedManager;
+    }
+
+    @Override
+    public PublishType validate(MultipartFile file) throws InvalidPackageException {
+        if (!file.getOriginalFilename().endsWith(".tar.gz") && !file.getOriginalFilename().endsWith(".whl")) {
+            throw new InvalidPackageException(
+                PackageErrorType.INVALID_FORMAT,
+                "PyPi-package must be .tar.gz or .whl"
+            ).withDetail("expected_extension", ".tar.gz or .whl")
+             .withDetail("actual_extension", getFileExtension(file));
+        }
+        return supportedManager.getPublishType();
+    }
+
+    private String getFileExtension(MultipartFile file) {
+        String filename = file.getOriginalFilename();
+        if (filename == null || filename.lastIndexOf('.') == -1) {
+            return "";
+        }
+        return filename.substring(filename.lastIndexOf('.')).toLowerCase();
+    }
+}

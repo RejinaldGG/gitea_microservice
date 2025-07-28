@@ -16,6 +16,7 @@ public class GiteaConfig {
     private String url;
     private String owner;
     private String token;
+    private String password;
     @Bean
     public BasicAuthRequestInterceptor giteaAuthInterceptor() {
         return new BasicAuthRequestInterceptor("token", token);
