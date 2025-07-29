@@ -2,6 +2,7 @@ package com.example.gitea_microservice.applictaion.services;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,14 +22,14 @@ public class PackageValidationService implements PackageValidatorUseCase {
     @Override
     public PublishType validate(PackageManager manager, MultipartFile file) throws InvalidPackageException {
         if (file.isEmpty()) {
-            throw new InvalidPackageException(PackageErrorType.EMPTY_PACKAGE, "Empty package file");
+            throw new InvalidPackageException(PackageErrorType.EMPTY_PACKAGE,  HttpStatus.UNPROCESSABLE_ENTITY, "Empty package file");
         }
         return validators.stream()
             .filter(v -> v.supports(manager))
             .findFirst()
             .orElseThrow(() -> new InvalidPackageException(
                 PackageErrorType.UNSUPPORTED_PACKAGE_MANAGER,
-                "Unsupported package manager: " + manager
+                HttpStatus.UNPROCESSABLE_ENTITY, "Unsupported package manager: " + manager
             ))
             .validate(file);
         

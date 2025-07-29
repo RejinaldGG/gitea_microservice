@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +22,7 @@ private final PackageManager supportedManager = PackageManager.CONDA;
         if (!file.getOriginalFilename().endsWith(".conda") && !file.getOriginalFilename().endsWith("tar.bz2")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Conda-package must be .conda or .tar.bz2"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Conda-package must be .conda or .tar.bz2"
             ).withDetail("expected_extension", ".conda or .tar.bz2")
              .withDetail("actual_extension", getFileExtension(file));
         }

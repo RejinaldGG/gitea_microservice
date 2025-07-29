@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
@@ -46,9 +48,9 @@ public class ChefPackageUploader extends AbstractManagerPackageUploader {
         .filter(parts -> parts.length >= 2)
         .map(parts -> parts[1].replaceAll("['\"]", ""))
         .findFirst()
-        .orElseThrow(() -> new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not find 'name' in metadata.rb"));
+        .orElseThrow(() -> new InvalidPackageException(PackageErrorType.INVALID_FORMAT, HttpStatus.UNPROCESSABLE_ENTITY, "Could not find 'name' in metadata.rb"));
         if (cookbookName == null) {
-            new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not find 'name' in metadata.rb");
+            new InvalidPackageException(PackageErrorType.INVALID_FORMAT, HttpStatus.UNPROCESSABLE_ENTITY, "Could not find 'name' in metadata.rb");
         }
         return cookbookName;
     }

@@ -3,6 +3,7 @@ package com.example.gitea_microservice.infrastructure.adapters.VersionExtractors
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
@@ -28,7 +29,7 @@ public class ArchVersionExtractor implements PackageVersionExtractor {
                 return version;
             }
         }
-        throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not extract version from filename: " + filename);
+        throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, HttpStatus.UNPROCESSABLE_ENTITY, "Could not extract version from filename: " + filename);
 }
 }
 

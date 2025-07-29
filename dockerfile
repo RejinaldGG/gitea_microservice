@@ -22,9 +22,12 @@ RUN apt-get update && \
         python3-venv \
         pip \
         gnupg \
+        g++-11 \
         apt-transport-https \
         wget \
     && rm -rf /var/lib/apt/lists/*
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
 
 RUN curl -fsSL https://download.docker.com/linux/static/stable/$(uname -m)/docker-26.1.3.tgz -o docker.tgz && \
     tar xzvf docker.tgz && \

@@ -5,7 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.gitea_microservice.domain.exception.InvalidPackageException;
 import com.example.gitea_microservice.domain.exception.PackageErrorType;
@@ -20,16 +23,37 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ConanPackageUploader extends AbstractManagerPackageUploader {
     private final GiteaConfig giteaConfig;
+    private final VersionExtractionUseCase versionExtractor;
+    private String pkgName;
     public ConanPackageUploader(
         PackageValidatorUseCase packageValidator,GiteaConfig giteaConfig,VersionExtractionUseCase versionExtractor) {
             super(packageValidator);
             this.giteaConfig = giteaConfig;
+            this.versionExtractor = versionExtractor;
 
     }
     @Override
     public boolean supports(PackageManager manager) {
         return manager == PackageManager.CONAN;
     }
+
+
+    @Override
+    public void uploadPackage(PackageManager manager, MultipartFile file) {
+        validate(manager, file);
+    try {
+
+        Path tempDir = createTempDir(manager);
+        Path pkgFile = writePackageFile(tempDir, file);
+        pkgName = file.getOriginalFilename();
+        unpack(pkgFile, tempDir);
+        runUpload(tempDir);
+        deleteTempDir(tempDir);
+    } catch (IOException | InterruptedException e) {
+        throw new RuntimeException("Failed to publish "+ manager.getDisplayName() +" package", e);
+    }
+    }
+
 
     private Path findProjectDir(Path root) throws IOException {
         try (Stream<Path> paths = Files.walk(root, 2)) {
@@ -49,15 +73,11 @@ public class ConanPackageUploader extends AbstractManagerPackageUploader {
             .filter(parts -> parts.length == 2)
             .map(parts -> parts[1].trim().replaceAll("['\"]", ""))
             .findFirst()
-            .orElseThrow(() -> new InvalidPackageException(PackageErrorType.INVALID_FORMAT, "Could not find '" + attribute + "' in conanfile.py"));
+            .orElseThrow(() -> new InvalidPackageException(PackageErrorType.INVALID_FORMAT, HttpStatus.UNPROCESSABLE_ENTITY, "Could not find '" + attribute + "' in conanfile.py"));
     }
 
     private String extractName(Path conanfile) throws IOException {
         return extractConanAttribute(conanfile, "name");
-    }
-
-    private String extractVersion(Path conanfile) throws IOException {
-        return extractConanAttribute(conanfile, "version");
     }
 
     @Override
@@ -65,9 +85,9 @@ public class ConanPackageUploader extends AbstractManagerPackageUploader {
         Path conanDir = findProjectDir(tempDir);
         Path metadata = conanDir.resolve("conanfile.py");
         String name = extractName(metadata);
-        String version = extractVersion(metadata);
+        String version = versionExtractor.extractVersion(PackageManager.CONAN, pkgName);
         
-        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "add", giteaConfig.getOwner(), giteaConfig.getUrl()+"/api/packages/"+giteaConfig.getOwner()+"/conan")));
+        log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "add", "--force", giteaConfig.getOwner(), giteaConfig.getUrl()+"/api/packages/"+giteaConfig.getOwner()+"/conan")));
         log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "remote", "login", giteaConfig.getOwner(), giteaConfig.getOwner(), "-p", giteaConfig.getPassword())));
         log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "profile", "detect", "--force")));
         log.info("Conan output:\n{}", runCommand(conanDir, List.of("conan", "create", ".", "--name=" + name, "--version=" + version)));

@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -8,6 +9,7 @@ import com.example.gitea_microservice.domain.exception.PackageErrorType;
 import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.domain.models.PublishType;
 import com.example.gitea_microservice.infrastructure.ports.PackageValidatorPort;
+
 @Component
 public class RubyGemsPackageValidator implements PackageValidatorPort{
 private final PackageManager supportedManager = PackageManager.RUBYGEMS;
@@ -21,8 +23,8 @@ private final PackageManager supportedManager = PackageManager.RUBYGEMS;
         if (!file.getOriginalFilename().endsWith(".gem")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "RPM-package must be  .gem"
-            ).withDetail("expected_extension", ".gem")
+                HttpStatus.UNPROCESSABLE_ENTITY, "RubyGems-package must be .gem\""
+            ).withDetail("expected_extension", ".gem\"")
              .withDetail("actual_extension", getFileExtension(file));
         }
         return supportedManager.getPublishType();

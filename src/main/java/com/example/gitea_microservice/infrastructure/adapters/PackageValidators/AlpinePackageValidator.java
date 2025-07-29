@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,7 @@ public class AlpinePackageValidator implements PackageValidatorPort {
         if (!file.getOriginalFilename().endsWith(".apk")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Alpine-package must be .apk"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Alpine-package must be .apk"
             ).withDetail("expected_extension", ".apk")
              .withDetail("actual_extension", getFileExtension(file));
         }

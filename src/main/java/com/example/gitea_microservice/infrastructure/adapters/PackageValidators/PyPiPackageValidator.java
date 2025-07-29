@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,7 @@ private final PackageManager supportedManager = PackageManager.PYPI;
         if (!file.getOriginalFilename().endsWith(".tar.gz") && !file.getOriginalFilename().endsWith(".whl")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "PyPi-package must be .tar.gz or .whl"
+                HttpStatus.UNPROCESSABLE_ENTITY, "PyPi-package must be .tar.gz or .whl"
             ).withDetail("expected_extension", ".tar.gz or .whl")
              .withDetail("actual_extension", getFileExtension(file));
         }

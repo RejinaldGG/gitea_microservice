@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +24,7 @@ public class ComposerPackageValidator implements PackageValidatorPort{
         if (!file.getOriginalFilename().endsWith(".zip")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Composer-package must be .zip"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Composer-package must be .zip"
             ).withDetail("expected_extension", ".zip")
              .withDetail("actual_extension", getFileExtension(file));
         }

@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,7 @@ private final PackageManager supportedManager = PackageManager.DEBIAN;
         if (!file.getOriginalFilename().endsWith(".deb")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Debian-package must be  .deb"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Debian-package must be  .deb"
             ).withDetail("expected_extension", ".deb")
              .withDetail("actual_extension", getFileExtension(file));
         }

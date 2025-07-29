@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +22,7 @@ private final PackageManager supportedManager = PackageManager.RPM;
         if (!file.getOriginalFilename().endsWith(".rpm")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "RPM-package must be  .rpm"
+                HttpStatus.UNPROCESSABLE_ENTITY, "RPM-package must be  .rpm"
             ).withDetail("expected_extension", ".rpm")
              .withDetail("actual_extension", getFileExtension(file));
         }

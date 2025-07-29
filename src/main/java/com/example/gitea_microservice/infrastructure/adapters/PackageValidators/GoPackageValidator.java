@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,7 @@ private final PackageManager supportedManager = PackageManager.GO;
         if (!file.getOriginalFilename().endsWith(".zip")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Go-package must be  .zip"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Go-package must be  .zip"
             ).withDetail("expected_extension", ".zip")
              .withDetail("actual_extension", getFileExtension(file));
         }

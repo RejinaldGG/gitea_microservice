@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,7 @@ public class ArchPackageValidator implements PackageValidatorPort {
         if (!file.getOriginalFilename().endsWith(".pkg.tar.zst")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Arch-package must be .pkg.tar.zst"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Arch-package must be .pkg.tar.zst"
             ).withDetail("expected_extension", ".pkg.tar.zst")
              .withDetail("actual_extension", getFileExtension(file));
         }

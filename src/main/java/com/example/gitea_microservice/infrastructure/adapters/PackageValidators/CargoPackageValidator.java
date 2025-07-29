@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +24,7 @@ public class CargoPackageValidator implements PackageValidatorPort{
         if (!file.getOriginalFilename().endsWith(".crate")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Cargo-package must be .crate"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Cargo-package must be .crate"
             ).withDetail("expected_extension", ".crate")
              .withDetail("actual_extension", getFileExtension(file));
         }

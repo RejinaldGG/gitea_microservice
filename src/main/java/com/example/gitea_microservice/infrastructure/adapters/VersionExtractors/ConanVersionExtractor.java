@@ -12,30 +12,29 @@ import com.example.gitea_microservice.domain.models.PackageManager;
 import com.example.gitea_microservice.infrastructure.ports.PackageVersionExtractor;
 
 @Component
-public class ComposerVersionExtractor implements PackageVersionExtractor{
+public class ConanVersionExtractor implements PackageVersionExtractor{
 private static final Pattern pattern = Pattern.compile(
-    "-(\\d+(?:\\.\\d+)*)(?:-[\\w]+)?\\.(?:zip|tar\\.gz|tgz)$", 
+    "[-_](\\d+(?:\\.\\d+)*)(?:[-_][\\w]+)?\\.(?:zip|tar\\.gz|tgz)$", 
     Pattern.CASE_INSENSITIVE
 );
 
-
-    private final PackageManager supportedManager = PackageManager.COMPOSER;
+    private final PackageManager supportedManager = PackageManager.CONAN;
         @Override
         public boolean supports(PackageManager manager) {
             return manager == supportedManager;
         }
-    @Override
-    public String extract(String filename) {
-        if (filename != null) {
+        @Override
+        public String extract(String filename) {
+            if (filename != null) {
 
 
-            Matcher matcher = pattern.matcher(filename);
-            if (matcher.find()) {
-                String version = matcher.group(1); 
-                return version;
+                Matcher matcher = pattern.matcher(filename);
+                if (matcher.find()) {
+                    String version = matcher.group(1); 
+                    return version;
+                }
             }
+            throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, HttpStatus.UNPROCESSABLE_ENTITY, "Could not extract version from filename: " + filename);
         }
-        throw new InvalidPackageException(PackageErrorType.INVALID_FORMAT, HttpStatus.UNPROCESSABLE_ENTITY, "Could not extract version from filename: " + filename);
-    }
 
 }

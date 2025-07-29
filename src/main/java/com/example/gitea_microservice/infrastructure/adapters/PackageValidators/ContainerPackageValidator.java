@@ -1,5 +1,6 @@
 package com.example.gitea_microservice.infrastructure.adapters.PackageValidators;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +22,7 @@ private final PackageManager supportedManager = PackageManager.CONTAINER;
         if (!file.getOriginalFilename().endsWith(".tar")) {
             throw new InvalidPackageException(
                 PackageErrorType.INVALID_FORMAT,
-                "Container-package must be .tar"
+                HttpStatus.UNPROCESSABLE_ENTITY, "Container-package must be .tar"
             ).withDetail("expected_extension", ".tar")
              .withDetail("actual_extension", getFileExtension(file));
         }
